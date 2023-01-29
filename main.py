@@ -97,8 +97,8 @@ def nba_scores():
 
 
 check = soup.find('h6', class_='NoRecords-header')
-startTime = '10:00'
-endtime = '11:00'
+startTime = '13:00'
+endtime = '04:00'
 currentTime = datetime.datetime.now().time().strftime("%H:%M")
 
 if check == None:
