@@ -1,3 +1,4 @@
+import datetime
 import os
 import time
 import requests
@@ -22,7 +23,7 @@ auth = tweepy.OAuth1UserHandler(
 api = tweepy.API(auth)
 # ----------------------------------------------------------------
 
-response = requests.get('https://www.cbssports.com/nba/stats/leaders/live/')
+response = requests.get('https://www.cbssports.com/nba/stats/leaders/live/?sortcol=pts&sortdir=descending')
 
 soup = BeautifulSoup(response.text, "html.parser")
 
@@ -44,6 +45,15 @@ assists_list = [score.text.split('\n')[9].strip(' ') for score in score_list]
 game_list = soup.find_all('tr', {"class": 'TableBase-bodyTr'})
 games_list = [score.text.split('\n')[4].strip(' ') for score in score_list]
 
+steal_list = soup.find_all('tr', {"class": 'TableBase-bodyTr'})
+steals_list = [score.text.split('\n')[11].strip(' ') for score in score_list]
+
+block_list = soup.find_all('tr', {"class": 'TableBase-bodyTr'})
+blocks_list = [score.text.split('\n')[12].strip(' ') for score in score_list]
+
+turnover_list = soup.find_all('tr', {"class": 'TableBase-bodyTr'})
+turnovers_list = [score.text.split('\n')[13].strip(' ') for score in score_list]
+
 res = []
 j = 0
 for i in range(len(scores_list)):
@@ -54,12 +64,15 @@ for i in range(len(scores_list)):
         res[j].append(rebounds_list[i])
         res[j].append(assists_list[i])
         res[j].append(games_list[i])
+        res[j].append(steals_list[i])
+        res[j].append(blocks_list[i])
+        res[j].append(turnovers_list[i])
         j += 1
 
 def nba_scores():
     for data in range(len(res)):
-        store = f"#{res[data][0].replace(' ', '')} {res[data][0]} has scored {int(float(res[data][1]))} points, {res[data][3]} rebounds, and {res[data][4]} assists in {res[data][2]} Minutes today!"
-
+        hashtag = res[data][0].replace(' ', '').replace("'", "")
+        store = f"#{hashtag} has scored {int(float(res[data][1]))} points, {res[data][3]} rebounds, {res[data][4]} assists, with {res[data][6]} steals, {res[data][7]} blocks, and {res[data][8]} turnovers within {res[data][2]} Minutes today."
         if '-' in res[data][5]:
             if os.path.exists('nba_scores.txt'):
                 nba_file = open("nba_scores.txt", "r")
@@ -84,10 +97,15 @@ def nba_scores():
 
 
 check = soup.find('h6', class_='NoRecords-header')
+startTime = '10:00'
+endtime = '11:00'
+currentTime = datetime.datetime.now().time().strftime("%H:%M")
 
 if check == None:
-    nba_scores()
+    if not startTime < currentTime < endtime:
+        nba_scores()
 else:
-    file = open("nba_scores.txt", "w")
-    file.truncate()
-    nba_scores()
+    if not startTime < currentTime < endtime:
+        file = open("nba_scores.txt", "w")
+        file.truncate()
+        nba_scores()
